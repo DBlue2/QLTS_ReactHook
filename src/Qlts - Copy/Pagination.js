@@ -8,10 +8,10 @@ const Pagination = ({
   onItemsPerPageChange,
 }) => {
   return (
-    <div className="flex justify-between items-center mt-3">
-      <div className="relative">
+    <div className="d-flex justify-content-between align-items-center mt-3">
+      <div className="form-group">
         <select
-          className="block w-full bg-white border border-gray-300 p-2 pr-8 rounded leading-tight focus:outline-none focus:border-blue-500"
+          className="form-select"
           value={itemsPerPage}
           onChange={(e) => onItemsPerPageChange(parseInt(e.target.value))}
         >

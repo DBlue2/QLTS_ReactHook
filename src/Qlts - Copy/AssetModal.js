@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { toast } from "react-toastify";
 import { assetService } from "./Api";
 
-const API_URL = "http://localhost:4000/DSTaiSan";
+const apiURL = "http://localhost:4000/DSTaiSan";
 
 const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
   const isEditing = !!asset;
@@ -22,11 +22,10 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
   // Custom validation function for checking duplicate MaTaiSan
   const checkDuplicateMaTaiSan = async (value) => {
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(apiURL);
       const data = await response.json();
       const duplicate = data.find(
-        (item) =>
-          item.DT_QLTS_TS_MaTaiSan === value && item.id !== (asset?.id || "")
+        item => item.DT_QLTS_TS_MaTaiSan === value && item.id !== (asset?.id || '')
       );
       return !duplicate;
     } catch (error) {
@@ -39,12 +38,10 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
   const checkDuplicateSerialNumber = async (value) => {
     if (!value) return true;
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(apiURL);
       const data = await response.json();
       const duplicate = data.find(
-        (item) =>
-          item.DT_QLTS_TS_SerialNumber === value &&
-          item.id !== (asset?.id || "")
+        item => item.DT_QLTS_TS_SerialNumber === value && item.id !== (asset?.id || '')
       );
       return !duplicate;
     } catch (error) {
@@ -61,27 +58,19 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
       .test("unique", "Mã tài sản đã tồn tại", checkDuplicateMaTaiSan),
     DT_QLTS_TS_TenTaiSan: Yup.string()
       .required("Tên tài sản bắt buộc")
-      .matches(
-        /^[a-zA-Z0-9\s\u00C0-\u024F\u1E00-\u1EFF]+$/,
-        "Tên tài sản chỉ được chứa chữ và số"
-      ),
+      .matches(/^[a-zA-Z0-9\s\u00C0-\u024F\u1E00-\u1EFF]+$/, "Tên tài sản chỉ được chứa chữ và số"),
     DT_QLTS_TS_SerialNumber: Yup.string()
       .required("Serial Number bắt buộc")
       .test("unique", "Serial Number đã tồn tại", checkDuplicateSerialNumber),
     DT_QLTS_TS_NamSanXuat: Yup.number("")
       .min(1990, "Năm sản xuất không được nhỏ hơn 1990")
-      .max(
-        new Date().getFullYear(),
-        "Năm sản xuất không được lớn hơn năm hiện tại"
-      ),
-    DT_QLTS_TS_NgayDuaVaoSuDung: Yup.date().max(
-      new Date(),
-      "Ngày không được lớn hơn ngày hiện tại"
-    ),
-
-    DT_QLTS_TS_KichThuoc_Dai: Yup.number().min(0, "Chiều dài không được âm"),
-    DT_QLTS_TS_KichThuoc_Rong: Yup.number().min(0, "Chiều rộng không được âm"),
-    DT_QLTS_TS_KichThuoc_Cao: Yup.number().min(0, "Chiều cao không được âm"),
+      .max(new Date().getFullYear(), "Năm sản xuất không được lớn hơn năm hiện tại"),
+      DT_QLTS_TS_KichThuoc_Dai: Yup.number()
+      .min(0, "Chiều dài không được âm"),
+    DT_QLTS_TS_KichThuoc_Rong: Yup.number()
+      .min(0, "Chiều rộng không được âm"),
+    DT_QLTS_TS_KichThuoc_Cao: Yup.number()
+      .min(0, "Chiều cao không được âm"),
   });
 
   // Formik
@@ -117,20 +106,17 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
       DT_QLTS_TS_NhapKho_DonViTinh: "",
     },
     validationSchema,
-    onSubmit: async (values, { resetForm }) => {
+    onSubmit: async (values) => {
       try {
         await assetService.saveAsset(values, isEditing, asset?.id);
-        toast.success(
-          isEditing ? "Cập nhật thành công!" : "Thêm mới thành công!"
-        );
+        toast.success(isEditing ? "Cập nhật thành công!" : "Thêm mới thành công!");
         await refreshData();
         onClose();
-        resetForm();
       } catch (error) {
         console.error("Lỗi khi gửi request:", error);
         toast.error(error.message || "Lỗi khi lưu dữ liệu!");
       }
-    },
+    }
   });
 
   if (!isOpen) return null;
@@ -140,75 +126,42 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
       <div className="modal-dialog modal-xl">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">
-              {isEditing ? "Sửa tài sản" : "Thêm tài sản mới"}
-            </h5>
-            <button
-              type="text-gray-500 hover:text-gray-700"
-              className="btn-close"
-              onClick={onClose}
-            ></button>
+            <h5 className="modal-title">{isEditing ? "Sửa tài sản" : "Thêm tài sản mới"}</h5>
+            <button type="button" className="btn-close" onClick={onClose}></button>
           </div>
           <div className="modal-body">
             <form onSubmit={formik.handleSubmit}>
               {/* Row 1 - Required fields */}
               <div className="row mb-3">
                 <div className="col-md-4">
-                  <label className="form-label">
-                    Mã tài sản<span className="text-danger">*</span>
-                  </label>
+                  <label className="form-label">Mã tài sản<span className="text-danger">*</span></label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      formik.touched.DT_QLTS_TS_MaTaiSan &&
-                      formik.errors.DT_QLTS_TS_MaTaiSan
-                        ? "is-invalid"
-                        : ""
-                    }`}
+                    className={`form-control ${formik.touched.DT_QLTS_TS_MaTaiSan && formik.errors.DT_QLTS_TS_MaTaiSan ? "is-invalid" : ""}`}
                     {...formik.getFieldProps("DT_QLTS_TS_MaTaiSan")}
                   />
-                  <div className="invalid-feedback">
-                    {formik.errors.DT_QLTS_TS_MaTaiSan}
-                  </div>
+                  <div className="invalid-feedback">{formik.errors.DT_QLTS_TS_MaTaiSan}</div>
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label">
-                    Tên tài sản<span className="text-danger">*</span>
-                  </label>
+                  <label className="form-label">Tên tài sản<span className="text-danger">*</span></label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      formik.touched.DT_QLTS_TS_TenTaiSan &&
-                      formik.errors.DT_QLTS_TS_TenTaiSan
-                        ? "is-invalid"
-                        : ""
-                    }`}
+                    className={`form-control ${formik.touched.DT_QLTS_TS_TenTaiSan && formik.errors.DT_QLTS_TS_TenTaiSan ? "is-invalid" : ""}`}
                     {...formik.getFieldProps("DT_QLTS_TS_TenTaiSan")}
                   />
-                  <div className="invalid-feedback">
-                    {formik.errors.DT_QLTS_TS_TenTaiSan}
-                  </div>
+                  <div className="invalid-feedback">{formik.errors.DT_QLTS_TS_TenTaiSan}</div>
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label">
-                    Serial Number<span className="text-danger">*</span>
-                  </label>
+                  <label className="form-label">Serial Number<span className="text-danger">*</span></label>
                   <input
                     type="text"
-                    className={`form-control ${
-                      formik.touched.DT_QLTS_TS_SerialNumber &&
-                      formik.errors.DT_QLTS_TS_SerialNumber
-                        ? "is-invalid"
-                        : ""
-                    }`}
+                    className={`form-control ${formik.touched.DT_QLTS_TS_SerialNumber && formik.errors.DT_QLTS_TS_SerialNumber ? "is-invalid" : ""}`}
                     {...formik.getFieldProps("DT_QLTS_TS_SerialNumber")}
                   />
-                  <div className="invalid-feedback">
-                    {formik.errors.DT_QLTS_TS_SerialNumber}
-                  </div>
+                  <div className="invalid-feedback">{formik.errors.DT_QLTS_TS_SerialNumber}</div>
                 </div>
               </div>
-
+  
               {/* Row 2 - Basic Information */}
               <div className="row mb-3">
                 <div className="col-md-3">
@@ -244,7 +197,7 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                   />
                 </div>
               </div>
-
+  
               {/* Row 3 - Location Information */}
               <div className="row mb-3">
                 <div className="col-md-3">
@@ -280,7 +233,7 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                   />
                 </div>
               </div>
-
+  
               {/* Row 4 - Product Information */}
               <div className="row mb-3">
                 <div className="col-md-3">
@@ -305,10 +258,8 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                     className="form-select"
                     {...formik.getFieldProps("DT_QLTS_TS_NamSanXuat")}
                   >
-                    {generateYearOptions().map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
+                    {generateYearOptions().map(year => (
+                      <option key={year} value={year}>{year}</option>
                     ))}
                   </select>
                 </div>
@@ -321,7 +272,7 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                   />
                 </div>
               </div>
-
+  
               {/* Row 5 - Dimensions */}
               <div className="row mb-3">
                 <div className="col-md-4">
@@ -355,7 +306,7 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                   />
                 </div>
               </div>
-
+  
               {/* Row 6 - Status and Description */}
               <div className="row mb-3">
                 <div className="col-md-4">
@@ -375,7 +326,7 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                   />
                 </div>
               </div>
-
+  
               {/* Row 7 - Warehouse Information */}
               <div className="row mb-3">
                 <div className="col-md-4">
@@ -403,7 +354,7 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                   />
                 </div>
               </div>
-
+  
               {/* Row 8 - Additional Information */}
               <div className="row mb-3">
                 <div className="col-md-12">
@@ -415,7 +366,7 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                   />
                 </div>
               </div>
-
+  
               {/* Row 9 - File Attachment */}
               <div className="row mb-3">
                 <div className="col-md-12">
@@ -425,22 +376,15 @@ const AssetModal = ({ isOpen, onClose, asset, refreshData }) => {
                     className="form-control"
                     onChange={(event) => {
                       const file = event.currentTarget.files[0];
-                      formik.setFieldValue(
-                        "DT_QLTS_TS_GiayToKemTheo_TenFile",
-                        file?.name || ""
-                      );
+                      formik.setFieldValue("DT_QLTS_TS_GiayToKemTheo_TenFile", file?.name || "");
                       // Handle file data separately if needed
                     }}
                   />
                 </div>
               </div>
-
+  
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={onClose}
-                >
+                <button type="button" className="btn btn-secondary" onClick={onClose}>
                   Đóng
                 </button>
                 <button type="submit" className="btn btn-primary">

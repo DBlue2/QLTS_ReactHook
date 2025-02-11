@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import AssetTable from "./AssetTable";
 import AssetModal from "./AssetModal";
 import Pagination from "./Pagination";
@@ -11,12 +11,14 @@ export default function List() {
   const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       setError(null);
       const result = await assetService.getAllAssets();
       setData(result);
@@ -24,6 +26,7 @@ export default function List() {
       setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
       toast.error("Lỗi khi tải dữ liệu: " + error.message);
     } finally {
+      setLoading(false);
     }
   };
 
@@ -41,12 +44,16 @@ export default function List() {
         (item) => item.DT_QLTS_TS_ID === DT_QLTS_TS_ID
       );
       if (!itemToDelete) {
-        throw new Error("Không tìm thấy tài sản");
+        toast.error("Không tìm thấy tài sản"); // Thêm toast ở đây
+        return;
       }
 
-      await assetService.deleteAsset(itemToDelete.id);
-      toast.success("Xóa tài sản thành công!");
-      await fetchData(); // Đảm bảo dữ liệu được làm mới
+      const response = await assetService.deleteAsset(itemToDelete.id);
+      if (response) {
+        // Kiểm tra response
+        toast.success("Xóa tài sản thành công!");
+        fetchData(); // Không cần await ở đây
+      }
     } catch (error) {
       toast.error("Lỗi khi xóa tài sản: " + error.message);
     }
@@ -58,8 +65,32 @@ export default function List() {
   const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
+  if (loading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "200px" }}
+      >
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-danger text-center" role="alert">
+        <p>{error}</p>
+        <button onClick={fetchData} className="btn btn-primary mt-2">
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mt-4">
       <h1 className="text-center mb-4">Danh sách tài sản</h1>
 
       <AssetTable
@@ -72,7 +103,7 @@ export default function List() {
       />
 
       <button
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        className="btn btn-primary mt-3"
         onClick={() => {
           setSelectedAsset(null);
           setIsModalOpen(true);
@@ -91,6 +122,13 @@ export default function List() {
           setCurrentPage(1);
         }}
       />
+
+      <button
+        onClick={() => toast.success("Test notification")}
+        className="btn btn-secondary"
+      >
+        Test Toast
+      </button>
 
       <AssetModal
         isOpen={isModalOpen}
